@@ -125,7 +125,7 @@ class GoogleVisionLineSegmentationParser {
      * @returns {*}
      */
     fun getYMax(data: EntityAnnotation): Int {
-        return data.boundingPoly.verticesList.maxBy { it.y }!!.y
+        return data.boundingPoly.verticesList.maxByOrNull { it.y }!!.y
     }
 
     /**

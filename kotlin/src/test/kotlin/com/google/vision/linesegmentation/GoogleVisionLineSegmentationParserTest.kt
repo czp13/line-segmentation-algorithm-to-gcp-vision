@@ -7,23 +7,39 @@ import com.google.cloud.vision.v1.AnnotateImageResponse
 import com.google.cloud.vision.v1.BoundingPoly
 import com.google.cloud.vision.v1.EntityAnnotation
 import com.google.cloud.vision.v1.Vertex
-import com.google.gson.FieldNamingPolicy
-import com.google.gson.FieldNamingStrategy
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
+import com.google.gson.*
+import com.google.protobuf.InvalidProtocolBufferException
+import com.google.protobuf.util.JsonFormat
 import org.junit.Assert
 import java.lang.reflect.Field
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 class GoogleVisionLineSegmentationParserTest {
     @Test
     fun happyPathParse() {
         val googleVisionLineSegmentationParser = GoogleVisionLineSegmentationParser()
-        val content = GoogleVisionLineSegmentationParserTest::class.java.getResource("/S01200HQT173.jpg.json").readText()
-        val annotateImageResponse = getGson().fromJson(content, AnnotateImageResponse::class.java)
-        val mergedArray = googleVisionLineSegmentationParser.initLineSegmentation(annotateImageResponse)
+//        Original way:
+//        val content = GoogleVisionLineSegmentationParserTest::class.java.getResource("/S01200HQT173.jpg.json").readText()
+//        val annotateImageResponse = getGson().fromJson(content, AnnotateImageResponse::class.java)
 
+//      New way:
+        val content = GoogleVisionLineSegmentationParserTest::class.java.getResource("/happiest.valley.farms.jpg.json").readText()
+
+        val jsonParser = JsonParser()
+        val responseJson: JsonObject = jsonParser.parse(content).getAsJsonObject()
+        val response: JsonObject = responseJson.getAsJsonArray("responses").get(0).getAsJsonObject()
+
+        val builder = AnnotateImageResponse.newBuilder()
+        try {
+            JsonFormat.parser().merge(response.toString(), builder)
+        } catch (e: InvalidProtocolBufferException) {
+            println("Error while parsing the JSON into AnnotateImageResponse." + e)
+        }
+        val annotateImageResponse = builder.build()
+
+
+        // Testing the result:
+        val mergedArray = googleVisionLineSegmentationParser.initLineSegmentation(annotateImageResponse)
         val expected = listOf("TESCO",
                 "eactra",
                 "CUMBERNAULD 0345 6779808",
